@@ -70,6 +70,24 @@ app.get("/api/health", async (req, res) => {
     res.status(500).json({ ok: false, message: "No se pudo conectar a PostgreSQL" });
   }
 });
+app.get("/api/health/db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+
+    res.json({
+      ok: true,
+      database: "connected",
+      time: result.rows[0].now
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      ok: false,
+      database: "error"
+    });
+  }
+});
 
 app.get("/api/members", async (req, res) => {
   try {
