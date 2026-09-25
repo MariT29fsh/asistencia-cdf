@@ -56,11 +56,25 @@ async function initDb() {
 }
 
 async function getMeeting(date) {
-  let result = await pool.query("SELECT * FROM meetings WHERE meeting_date = $1", [date]);
-  if (result.rows.length) return result.rows[0];
-  result = await pool.query("INSERT INTO meetings(meeting_date) VALUES($1) RETURNING *", [date]);
-  return result.rows[0];
+  const result = await pool.query(`
+    INSERT INTO meetings (meeting_date)
+    VALUES ($1)
+    ON CONFLICT (meeting_date) DO NOTHING
+    RETURNING *
+  `, [date]);
+
+  if (result.rows.length) {
+    return result.rows[0];
+  }
+
+  const existing = await pool.query(
+    "SELECT * FROM meetings WHERE meeting_date = $1",
+    [date]
+  );
+
+  return existing.rows[0];
 }
+
 
 app.get("/api/health", async (req, res) => {
   try {
